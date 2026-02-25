@@ -1,0 +1,5 @@
+---
+- name: copy inventory file
+  include_tasks: copy-inventory.yml
+- name: run the ansible-playbook
+  include_tasks: run.yml

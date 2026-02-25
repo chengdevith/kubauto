@@ -1,0 +1,10 @@
+---
+- name: Setting up infrastructure
+  hosts: localhost
+  become: true
+  vars_files:
+    - ../vars/machines.yml
+  roles:
+    - create-instances
+    - setup-kubespray
+    - auto-setup-dns

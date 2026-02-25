@@ -1,0 +1,64 @@
+# only create the worker machines 
+# we should have a task in order to wait for the ssh connection of master01 to be ready before running the other tasks  ( use module called wait_for )
+- name: Check if publick key exist 
+  stat:
+    path: "{{ ssh_pubkey_path }}"
+  register: ssh_pubkey_stat
+- name: Generate ssh key pair there is no pub key 
+  shell: |
+    ssh-keygen -t rsa -b 4096 -f /home/{{agent_user}}/.ssh/id_rsa -N ''
+  become_user: "{{agent_user}}"  
+  when: ssh_pubkey_stat.stat.exists == False
+- name: Slurp pub key from local machine 
+  slurp: 
+    src: "{{ ssh_pubkey_path }}"
+  register: ssh_pubkey
+
+- name: Create GCP workers instances
+  google.cloud.gcp_compute_instance:
+    name: "{{ item.name }}"
+    machine_type: "{{ item.machine_type }}"
+    zone: "{{ item.zone }}"
+    project: "{{google_project_id}}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{service_account_path}}"
+    state: present 
+    metadata:
+      ssh-keys: "{{agent_user}}:{{ ssh_pubkey['content'] | b64decode }}"
+
+    disks:
+      - auto_delete: true
+        boot: true
+        initialize_params:
+          source_image: "{{ item.image }}"
+          disk_size_gb: "{{ item.disk_size }}"
+          disk_type: "{{ item.disk_type }}"
+    network_interfaces:
+      - network:
+          selfLink: "projects/{{google_project_id}}/global/networks/default"
+        access_configs:
+          - name: External NAT
+            type: ONE_TO_ONE_NAT
+    tags:
+      items:
+        - http-server
+        - https-server
+  loop: "{{ machines_info }}"
+  register: gcp_workers_instances
+
+  # when: false 
+  when: item.name not in ["master01", "master02", "master03"]
+- name: Save workers instances to file
+  copy:
+    content: "{{ gcp_workers_instances | to_json }}"
+    dest: "/home/{{ agent_user }}/kubauto/playbooks/gcp_workers_instances.json"
+- name: Register the existing inventory file 
+  slurp:
+    src: "../inventory.ini"
+  register: existing_inventory 
+- name: Update our inventory 
+  template: 
+    src: "../templates/workers_inventory.j2"
+    dest: "../inventory.ini"
+  vars:
+    existing_content: "{{ existing_inventory['content'] | b64decode }}"

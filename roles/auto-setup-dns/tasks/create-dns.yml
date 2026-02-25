@@ -1,0 +1,30 @@
+- name: Load GCP workers instances info
+  set_fact:
+    gcp_workers_data: "{{ lookup('file', '/home/' + agent_user + '/kubauto/playbooks/gcp_workers_instances.json') | from_json }}"
+
+- name: Set worker01 public IP
+  set_fact:
+    worker01_public_ip: "{{ gcp_workers_data.results | rejectattr('skipped', 'defined') | selectattr('name', 'equalto', 'worker01') | map(attribute='networkInterfaces.0.accessConfigs.0.natIP') | first }}"
+
+- name: Echo worker01 public IP
+  debug:
+    msg: "worker01 public IP: {{ worker01_public_ip }}"
+- name: Create Cloudflare DNS record
+  uri:
+    url: "https://api.cloudflare.com/client/v4/zones/{{ cloudflare_zone_id }}/dns_records"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ cloudflare_api_token }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      type: "A"
+      name: "{{ item }}"
+      content: "{{ worker01_public_ip }}"
+      ttl: 1
+      proxied: false
+  loop: "{{ dns_records }}"
+
+- name: Wait exactly 120 seconds
+  pause:
+    seconds: 120

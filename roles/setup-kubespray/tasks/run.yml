@@ -1,0 +1,8 @@
+- name: Run Kubespray
+  become: false
+  ansible.builtin.shell: |
+    ansible-playbook -b -vv -i inventory/sample/inventory.ini cluster.yml
+  args:
+    chdir: /home/{{ agent_user }}/kubauto/k8s-setup
+  async: 7200
+  poll: 10

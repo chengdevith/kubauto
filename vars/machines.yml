@@ -1,0 +1,77 @@
+# contains all configuration related to the machines that we might use for the whole infrastructure setup 
+
+# For create GCP instances
+service_account_path: "your_service_account_path"
+google_project_id: "your_google_project_id"
+ssh_pubkey_path: "your_id_rsa.pub_path"
+ssh_private_path: "your_id_rsa_path"
+agent_user: "your_user"
+
+# For auto setup cloudflare DNS record 
+cloudflare_api_token: "your_cloudflare_api_token"
+domain_name: "your_domain_name"
+dashboard_subdomain: "kubernetes-dashboard"
+argocd_subdomain: "argocd"
+dns_records:
+  - "{{ dashboard_subdomain }}.{{ domain_name }}"
+  - "{{ argocd_subdomain }}.{{ domain_name }}"
+cloudflare_zone_id: "your_cloudflare_zone_id"
+letsencrypt_email: "your_email"
+
+# Define machine spec
+machine_specs:
+  large:
+    machine_type: "e2-standard-2"
+    zone: "asia-southeast2-a"
+    disk_size: 20
+    disk_type: "pd-standard" # we have hdd(pd-standard) , ssd( pd-ssd)
+  medium:
+    machine_type: "e2-medium"
+    zone: "asia-east1-a"
+    disk_size: 20
+    disk_type: "pd-standard"
+
+ubuntu_specs:
+  v22:
+    image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2204-lts"
+  v24:
+    image: "projects/ubuntu-os-cloud/global/images/family/ubuntu-2404-lts"
+
+# Define machines that we will create
+machines_info:
+  # master requirement : RAM 8G, ....
+
+  - name: "master01"
+    machine_type: "{{ machine_specs.large.machine_type }}"
+    image: "{{ ubuntu_specs.v22.image }}"
+    zone: "{{ machine_specs.large.zone }}"
+    disk_size: "{{ machine_specs.large.disk_size }}"
+    disk_type: "{{ machine_specs.large.disk_type }}"
+
+  - name: "master02"
+    machine_type: "{{ machine_specs.large.machine_type }}"
+    image: "{{ ubuntu_specs.v22.image }}"
+    zone: "{{ machine_specs.large.zone }}"
+    disk_size: "{{ machine_specs.large.disk_size }}"
+    disk_type: "{{ machine_specs.large.disk_type }}"
+
+  - name: "master03"
+    machine_type: "{{ machine_specs.large.machine_type }}"
+    image: "{{ ubuntu_specs.v22.image }}"
+    zone: "{{ machine_specs.large.zone }}"
+    disk_size: "{{ machine_specs.large.disk_size }}"
+    disk_type: "{{ machine_specs.large.disk_type }}"
+
+  - name: "worker01"
+    machine_type: "{{ machine_specs.medium.machine_type }}"
+    image: "{{ ubuntu_specs.v22.image }}"
+    zone: "{{ machine_specs.medium.zone }}"
+    disk_size: "{{ machine_specs.medium.disk_size }}"
+    disk_type: "{{ machine_specs.medium.disk_type }}"
+
+  - name: "worker02"
+    machine_type: "{{ machine_specs.medium.machine_type }}"
+    image: "{{ ubuntu_specs.v22.image }}"
+    zone: "{{ machine_specs.medium.zone }}"
+    disk_size: "{{ machine_specs.medium.disk_size }}"
+    disk_type: "{{ machine_specs.medium.disk_type }}"

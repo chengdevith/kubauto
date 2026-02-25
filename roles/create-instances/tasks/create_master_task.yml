@@ -1,0 +1,69 @@
+# tasks for only create the master instance 
+
+- name: Loop to show machines specs
+  debug: 
+    msg: |
+      Machine Name: {{ item.name }}
+
+  loop: "{{ machines_info }}"
+  when: true 
+- name: Check if public key exist 
+  stat:
+    path: "{{ ssh_pubkey_path }}"
+  register: ssh_pubkey_stat
+- name: Generate ssh key pair there is no pub key 
+  shell: |
+    ssh-keygen -t rsa -b 4096 -f /home/{{agent_user}}/.ssh/id_rsa -N ''
+  become_user: "{{agent_user}}"  
+  when: ssh_pubkey_stat.stat.exists == False
+- name: Slurp pub key from local machine 
+  slurp: 
+    src: "{{ ssh_pubkey_path }}"
+  register: ssh_pubkey
+- name: Create GCP instance
+  google.cloud.gcp_compute_instance:
+    name: "{{ item.name }}"
+    machine_type: "{{ item.machine_type }}"
+    zone: "{{ item.zone }}"
+    project: "{{google_project_id}}"
+    auth_kind: "serviceaccount"
+    service_account_file: "{{ service_account_path }}"
+    state: present # absent -> delete instance 
+    metadata:
+      ssh-keys: "{{agent_user}}:{{ ssh_pubkey['content'] | b64decode }}"
+
+    disks:
+      - auto_delete: true
+        boot: true
+        initialize_params:
+          source_image: "{{ item.image }}"
+          disk_size_gb: "{{ item.disk_size }}"
+          disk_type: "{{ item.disk_type }}"
+    network_interfaces:
+      - network:
+          selfLink: "projects/{{google_project_id}}/global/networks/default"
+        access_configs:
+          - name: External NAT
+            type: ONE_TO_ONE_NAT
+    tags:
+      items:
+        - http-server
+        - https-server
+  loop: "{{ machines_info }}"
+  register: gcp_instances
+  # when: false 
+  when: item.name in ["master01", "master02", "master03"] 
+    # - item.name == "master02"
+    # - item.name == "master03"
+
+# Error in getting the first values  results 
+- name: Write gcp_instances into json file
+  copy:
+    content: "{{ gcp_instances }}"
+    dest: "./gcp_more_instances.json"
+  when: true
+- name: Create inventory from template 
+  template: 
+    src: ../templates/masters_inventory.j2
+    dest: ../inventory.ini
+  when: true  

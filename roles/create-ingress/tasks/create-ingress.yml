@@ -1,0 +1,37 @@
+- name: Install cert-manager
+  command: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/latest/download/cert-manager.yaml
+  delegate_to: master01
+
+- name: Wait for cert-manager to be ready
+  command: kubectl wait --for=condition=available --timeout=120s deployment/cert-manager -n cert-manager
+  delegate_to: master01
+
+- name: Copy ClusterIssuer to master01
+  template:
+    src: clusterissuer.yml.j2
+    dest: /tmp/clusterissuer.yml
+  delegate_to: master01
+
+- name: Apply ClusterIssuer
+  command: kubectl apply -f /tmp/clusterissuer.yml
+  delegate_to: master01
+
+- name: Copy dashboard ingress manifest to master01
+  template:
+    src: k8s-ingress.yml.j2
+    dest: /tmp/k8s-ingress.yml
+  delegate_to: master01
+
+- name: Copy argocd ingress manifest to master01
+  template:
+    src: argocd-ingress.yml.j2
+    dest: /tmp/argocd-ingress.yml
+  delegate_to: master01
+  
+- name: Apply ingress
+  command: "kubectl apply -f /tmp/{{ item }}"
+  loop:
+    - argocd-ingress.yml
+    - k8s-ingress.yml
+  delegate_to: master01
+  run_once: true

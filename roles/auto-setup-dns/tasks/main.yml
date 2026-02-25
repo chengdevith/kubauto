@@ -1,0 +1,3 @@
+---
+- name: Create domain name
+  include_tasks: create-dns.yml

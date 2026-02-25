@@ -1,0 +1,8 @@
+{{ existing_content }}
+
+[kube_node]
+{% for instance in gcp_workers_instances.results %}
+{% if not instance.skipped is defined and instance.name is defined %}
+{{ instance.name }} ansible_host={{ instance.networkInterfaces[0].accessConfigs[0].natIP }} ip={{ instance.networkInterfaces[0].networkIP }} access_ip={{ instance.networkInterfaces[0].networkIP }}
+{% endif %}
+{% endfor %}

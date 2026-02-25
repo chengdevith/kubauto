@@ -1,0 +1,6 @@
+---
+- name: Create master machines
+  include_tasks: create_master_task.yml
+
+- name: Create worker machines
+  include_tasks: create_worker_task.yml

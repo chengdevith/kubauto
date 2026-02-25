@@ -1,0 +1,8 @@
+---
+- name: Creating ingress
+  hosts: master01
+  become: true
+  vars_files:
+    - ../vars/machines.yml
+  roles:
+    - create-ingress

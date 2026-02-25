@@ -1,0 +1,7 @@
+- name: Wait exactly 300 seconds
+  pause:
+    seconds: 300
+- name: Copy inventory to Kubespray folder
+  ansible.builtin.copy:
+    src: /home/{{ agent_user }}/kubauto/inventory.ini
+    dest: /home/{{ agent_user }}/kubauto/k8s-setup/inventory/sample/inventory.ini
