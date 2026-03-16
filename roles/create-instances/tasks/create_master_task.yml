@@ -26,8 +26,9 @@
     machine_type: "{{ item.machine_type }}"
     zone: "{{ item.zone }}"
     project: "{{google_project_id}}"
-    auth_kind: "serviceaccount"
-    service_account_file: "{{ service_account_path }}"
+    auth_kind: application
+    # auth_kind: "serviceaccount"
+    # service_account_file: "{{ service_account_path }}"
     state: present # absent -> delete instance 
     metadata:
       ssh-keys: "{{agent_user}}:{{ ssh_pubkey['content'] | b64decode }}"
@@ -55,6 +56,9 @@
   when: item.name in ["master01", "master02", "master03"] 
     # - item.name == "master02"
     # - item.name == "master03"
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ adc_file }}"
+    GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES: "1"
 
 # Error in getting the first values  results 
 - name: Write gcp_instances into json file

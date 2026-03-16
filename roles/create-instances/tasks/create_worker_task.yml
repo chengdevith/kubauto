@@ -20,8 +20,9 @@
     machine_type: "{{ item.machine_type }}"
     zone: "{{ item.zone }}"
     project: "{{google_project_id}}"
-    auth_kind: "serviceaccount"
-    service_account_file: "{{service_account_path}}"
+    auth_kind: application
+    # auth_kind: "serviceaccount"
+    # service_account_file: "{{service_account_path}}"
     state: present 
     metadata:
       ssh-keys: "{{agent_user}}:{{ ssh_pubkey['content'] | b64decode }}"
@@ -48,6 +49,9 @@
 
   # when: false 
   when: item.name not in ["master01", "master02", "master03"]
+  environment:
+    GOOGLE_APPLICATION_CREDENTIALS: "{{ adc_file }}"
+    GOOGLE_EXTERNAL_ACCOUNT_ALLOW_EXECUTABLES: "1"
 - name: Save workers instances to file
   copy:
     content: "{{ gcp_workers_instances | to_json }}"

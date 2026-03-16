@@ -1,7 +1,7 @@
 # contains all configuration related to the machines that we might use for the whole infrastructure setup 
 
 # For create GCP instances
-service_account_path: "your_service_account_path"
+adc_file: "your_adc_file_path"
 google_project_id: "your_google_project_id"
 ssh_pubkey_path: "your_id_rsa.pub_path"
 ssh_private_path: "your_id_rsa_path"
